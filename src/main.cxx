@@ -47,7 +47,7 @@ int main(int, char *[])
     if (!glContext)
         Log::errAndQuit(SDL_GetError());
 
-    SDL(SDL_GL_SetSwapInterval(0));
+    SDL(SDL_GL_SetSwapInterval(1));
 
     // Create window2
     SDL_Window *window2 = SDL_CreateWindow("Current Show",
@@ -65,6 +65,7 @@ int main(int, char *[])
     }
 
     SDL(SDL_GL_MakeCurrent(window2, glContext));
+    SDL(SDL_GL_MakeCurrent(window, glContext));
 
     // Initialize GLEW
     {
@@ -73,20 +74,14 @@ int main(int, char *[])
         if (err != GLEW_OK)
             Log::errAndQuit((const char *)glewGetErrorString(err));
     }
-
-    SDL(SDL_GL_MakeCurrent(window, glContext));
     LaserShowRenderer laserShowRenderer;
-    laserShowRenderer.setShow("Test2");
+    laserShowRenderer.setShow("Test");
 
     // Run main loop
     auto t_previous = std::chrono::high_resolution_clock::now();
     bool loop = true;
     while (loop)
     {
-        int w, h;
-        SDL_GL_GetDrawableSize(window, &w, &h);
-        glViewport(0, 0, w, h);
-
         SDL_Event event;
         while (SDL_PollEvent(&event))
         {
@@ -104,15 +99,27 @@ int main(int, char *[])
         t_previous = t_now;
         float dT = t_diff.count();
 
+        std::cout << dT << std::endl;
+
         laserShowRenderer.update(dT);
 
-        SDL(SDL_GL_MakeCurrent(window, glContext));
-        laserShowRenderer.render(w, h);
-        SDL_GL_SwapWindow(window);
+        {
+            SDL(SDL_GL_MakeCurrent(window, glContext));
+            int w, h;
+            SDL_GL_GetDrawableSize(window, &w, &h);
+            glViewport(0, 0, w, h);
+            laserShowRenderer.render(w, h);
+            SDL_GL_SwapWindow(window);
+        }
 
-        SDL(SDL_GL_MakeCurrent(window2, glContext));
-        laserShowRenderer.render2DVisualization(w, h);
-        SDL_GL_SwapWindow(window2);
+        {
+            SDL(SDL_GL_MakeCurrent(window2, glContext));
+            int w, h;
+            SDL_GL_GetDrawableSize(window2, &w, &h);
+            glViewport(0, 0, w, h);
+            laserShowRenderer.render2DVisualization(w, h);
+            SDL_GL_SwapWindow(window2);
+        }
     }
 
     SDL_GL_DeleteContext(glContext);

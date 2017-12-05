@@ -30,10 +30,14 @@ class LaserShowRenderer
 
     private:
         GLuint vertexbuffer;
+        GLuint vertexbuffer2;
         GLuint colorbuffer;
         GLuint program;
+        GLuint program2;
 
         static const char *fragmentShaderSrc;
         static const char *vertexShaderSrc;
+        static const char *fragmentShaderSrc2;
+        static const char *vertexShaderSrc2;
 
 };
