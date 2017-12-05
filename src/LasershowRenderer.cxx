@@ -69,7 +69,40 @@ LaserShowRenderer::LaserShowRenderer()
         GL(glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 18, g_vertex_buffer_data, GL_STATIC_DRAW));
     }
 
+    {
+        GLfloat g_vertex_buffer_data[] =
+        {
+            0.0f, 1.0f,
+            0.0f, 0.0f,
+            1.0f, 0.0f,
+
+            1.0f, 0.0f,
+            1.0f, 1.0f,
+            0.0f, 1.0f
+        };
+        GL(glGenBuffers(1, &uvbuffer2));
+        GL(glBindBuffer(GL_ARRAY_BUFFER, uvbuffer2));
+        GL(glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 12, g_vertex_buffer_data, GL_STATIC_DRAW));
+    }
+
     GL(glGenBuffers(1, &colorbuffer));
+
+    {
+        unsigned char data[] =
+        {
+            255, 0, 0, 255,
+            0, 255, 0, 255,
+            255, 0, 0, 255,
+            255, 0, 0, 255
+        };
+        GL(glGenTextures(1, &texture2));
+        GL(glBindTexture(GL_TEXTURE_2D, texture2));
+        GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    }
 
     // Initialize shaders
     {
@@ -197,9 +230,9 @@ LaserShowRenderer::render(int, int)
     GL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-    unsigned char r[NUM_TRIANGLES];
-    unsigned char g[NUM_TRIANGLES];
-    unsigned char b[NUM_TRIANGLES];
+    float r[NUM_TRIANGLES];
+    float g[NUM_TRIANGLES];
+    float b[NUM_TRIANGLES];
     generators[currentGenerator].generate(currentBeat, NUM_TRIANGLES, r, g, b);
 
     GL(glUseProgram(program));
@@ -207,9 +240,9 @@ LaserShowRenderer::render(int, int)
     GLfloat colors[NUM_TRIANGLES * 9];
     for (int i = 0; i < NUM_TRIANGLES; i++)
     {
-        float cr = float(r[i]) / 255.0f;
-        float cg = float(g[i]) / 255.0f;
-        float cb = float(b[i]) / 255.0f;
+        float cr = r[i];
+        float cg = g[i];
+        float cb = b[i];
         float brightness = std::max(cr, std::max(cg, cb));
 
 
@@ -253,13 +286,55 @@ void LaserShowRenderer::render2DVisualization(int, int)
     GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
 
     GL(glEnableVertexAttribArray(1));
-    GL(glBindBuffer(GL_ARRAY_BUFFER, colorbuffer));
-    GL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+    GL(glBindBuffer(GL_ARRAY_BUFFER, uvbuffer2));
+    GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr));
+
+    GL(glBindTexture(GL_TEXTURE_2D, texture2));
 
     GL(glDrawArrays(GL_TRIANGLES, 0, 6));
 
     GL(glDisableVertexAttribArray(0));
     GL(glDisableVertexAttribArray(1));
+
+    GL(glUseProgram(program));
+    glBegin(GL_QUADS);
+    glVertex3f(-1, 1.01 - 2 * currentBeat / float(generators[currentGenerator].duration), 0);
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glVertex3f(1, 1.01 - 2 * currentBeat / float(generators[currentGenerator].duration), 0);
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glVertex3f(1, 0.99 - 2 * currentBeat / float(generators[currentGenerator].duration), 0);
+    glColor3f(1.0f, 0.0f, 1.0f);
+    glVertex3f(-1, 0.99 - 2 * currentBeat / float(generators[currentGenerator].duration), 0);
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glEnd();
+}
+
+#define TEXTURE_SIZE 512
+
+void LaserShowRenderer::generateNewTexture()
+{
+    unsigned char data[TEXTURE_SIZE * TEXTURE_SIZE * 4];
+    float r[TEXTURE_SIZE];
+    float g[TEXTURE_SIZE];
+    float b[TEXTURE_SIZE];
+
+    for (int i = 0; i < TEXTURE_SIZE; i++)
+    {
+        float pct = float(i) / float(TEXTURE_SIZE) * float(generators[currentGenerator].duration);
+        generators[currentGenerator].generate(pct, TEXTURE_SIZE, r, g, b);
+        for (int j = 0; j < TEXTURE_SIZE; j++)
+        {
+            int ri = std::min(std::max(0, int(256 * r[j])), 255);
+            int gi = std::min(std::max(0, int(256 * g[j])), 255);
+            int bi = std::min(std::max(0, int(256 * b[j])), 255);
+            data[i * TEXTURE_SIZE * 4 + j * 4 + 0] = ri;
+            data[i * TEXTURE_SIZE * 4 + j * 4 + 1] = gi;
+            data[i * TEXTURE_SIZE * 4 + j * 4 + 2] = bi;
+            data[i * TEXTURE_SIZE * 4 + j * 4 + 3] = 255;
+        }
+    }
+    GL(glBindTexture(GL_TEXTURE_2D, texture2));
+    GL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, TEXTURE_SIZE, TEXTURE_SIZE, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
 }
 
 void LaserShowRenderer::update(float dT)
@@ -274,6 +349,7 @@ void LaserShowRenderer::update(float dT)
 
         currentBeat -= int(currentBeat);
         generators[currentGenerator].reset();
+        generateNewTexture();
     }
 }
 
@@ -284,6 +360,8 @@ void LaserShowRenderer::setShow(std::string name)
         if (std::string(generators[i].name) == name)
         {
             currentGenerator = i;
+            generators[currentGenerator].reset();
+            generateNewTexture();
             return;
         }
     }
@@ -315,22 +393,23 @@ void main(){
 const char *LaserShowRenderer::vertexShaderSrc2 = R"(
 #version 330 core
 layout(location = 0) in vec3 vertexPosition_modelspace;
-layout(location = 1) in vec3 vertexColor;
+layout(location = 1) in vec2 vertexUV;
 
-out vec3 fragmentColor;
+out vec2 UV;
 
 void main(){
     gl_Position.xyz = vertexPosition_modelspace;
     gl_Position.w = 1.0;
-    fragmentColor = vertexColor;
+    UV = vertexUV;
 }
 )";
 
 const char *LaserShowRenderer::fragmentShaderSrc2 = R"(
 #version 330 core
-in vec3 fragmentColor;
+in vec2 UV;
+uniform sampler2D myTextureSampler;
 out vec3 color;
 void main(){
-    color = vec3(1.0,0.2,0.5);
+    color = texture( myTextureSampler, UV ).rgb * 0.8;
 }
 )";

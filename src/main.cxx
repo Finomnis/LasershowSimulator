@@ -20,6 +20,7 @@
 
 int main(int, char *[])
 {
+    srand(time(NULL));
     // Initialize SDL
     SDL_SetMainReady();
     SDL(SDL_Init(SDL_INIT_EVERYTHING));
@@ -52,7 +53,7 @@ int main(int, char *[])
     // Create window2
     SDL_Window *window2 = SDL_CreateWindow("Current Show",
                                            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-                                           800, 600,
+                                           640, 480,
                                            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window2)
         Log::errAndQuit(SDL_GetError());
@@ -75,7 +76,7 @@ int main(int, char *[])
             Log::errAndQuit((const char *)glewGetErrorString(err));
     }
     LaserShowRenderer laserShowRenderer;
-    laserShowRenderer.setShow("Test");
+    laserShowRenderer.setShow("Moving Waves");
 
     // Run main loop
     auto t_previous = std::chrono::high_resolution_clock::now();
@@ -99,7 +100,7 @@ int main(int, char *[])
         t_previous = t_now;
         float dT = t_diff.count();
 
-        std::cout << dT << std::endl;
+        //std::cout << dT << std::endl;
 
         laserShowRenderer.update(dT);
 

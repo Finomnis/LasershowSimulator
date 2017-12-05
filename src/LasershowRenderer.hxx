@@ -19,6 +19,8 @@ class LaserShowRenderer
         void setShow(std::string name);
 
     private:
+        void generateNewTexture();
+
         float currentBeat = 0.0f;
         float bpm = 120.0f;
 
@@ -31,9 +33,11 @@ class LaserShowRenderer
     private:
         GLuint vertexbuffer;
         GLuint vertexbuffer2;
+        GLuint uvbuffer2;
         GLuint colorbuffer;
         GLuint program;
         GLuint program2;
+        GLuint texture2;
 
         static const char *fragmentShaderSrc;
         static const char *vertexShaderSrc;
