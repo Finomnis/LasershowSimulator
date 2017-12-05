@@ -126,7 +126,7 @@ LaserShowRenderer::render(int w, int h)
     unsigned char r[NUM_TRIANGLES];
     unsigned char g[NUM_TRIANGLES];
     unsigned char b[NUM_TRIANGLES];
-    generators[currentGenerator].run(currentBeat, NUM_TRIANGLES, r, g, b);
+    generators[currentGenerator].generate(currentBeat, NUM_TRIANGLES, r, g, b);
 
     GL(glUseProgram(program));
 
@@ -178,6 +178,7 @@ void LaserShowRenderer::update(float dT)
         }
 
         currentBeat -= int(currentBeat);
+        generators[currentGenerator].reset();
     }
 }
 

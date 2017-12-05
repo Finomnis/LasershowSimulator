@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 
-LASERSHOW(Test, 4)
+static void generate(float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b)
 {
     printf("%f\n", timePosition);
     fflush(stdout);
@@ -19,8 +19,15 @@ LASERSHOW(Test, 4)
 
 }
 
+static void reset()
+{
 
-LASERSHOW(Test2, 4)
+}
+
+REGISTER_LASERSHOW(Test, 4, generate, reset)
+
+
+/*LASERSHOW(Test2, 4)
 {
     bool showEven = ((int)timePosition) & 0x1;
 
@@ -35,5 +42,5 @@ LASERSHOW(Test2, 4)
             b[i] = 255;
         }
     }
-}
+}*/
 

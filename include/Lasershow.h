@@ -8,29 +8,30 @@ extern "C" {
 #include <stdbool.h>
 
 // generates the image at time 'time'. Array size is 'numElements'. r,g,b are arrays of size 'numElements'.
-typedef void LasershowGeneratorFunc(float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b);
+typedef void LasershowGenerateFunc(float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b);
+typedef void LasershowResetFunc();
 
 struct LaserShowGenerator
 {
     char *name;
     int duration;
-    LasershowGeneratorFunc *run;
+    LasershowGenerateFunc *generate;
+    LasershowResetFunc *reset;
 };
 
 void registerLasershow(struct LaserShowGenerator gen);
 struct LaserShowGenerator *getLasershows(size_t *size);
 
-#define LASERSHOW(name_, duration_)\
-    static LasershowGeneratorFunc name_##laserShowFunc;\
+#define REGISTER_LASERSHOW(name_, duration_, generateFunc_, resetFunc_)\
     static void __attribute__((constructor)) name_##registerLasershow_()\
     {\
         struct LaserShowGenerator gen; \
         gen.name = #name_; \
         gen.duration = duration_; \
-        gen.run = name_##laserShowFunc; \
+        gen.generate = generateFunc_; \
+        gen.reset = resetFunc_; \
         registerLasershow(gen); \
-    }\
-    static void name_##laserShowFunc (float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b)
+    }
 
 #endif
 #ifdef __cplusplus
