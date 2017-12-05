@@ -24,12 +24,20 @@ int main(int, char *[])
     SDL_SetMainReady();
     SDL(SDL_Init(SDL_INIT_EVERYTHING));
 
+    // Create window
     SDL_Window *window = SDL_CreateWindow("Lasershow Simulator",
                                           SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
                                           800, 600,
                                           SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window)
         Log::errAndQuit(SDL_GetError());
+
+    {
+        int x, y, w, h;
+        SDL_GetWindowPosition(window, &x, &y);
+        SDL_GetWindowSize(window, &w, &h);
+        SDL_SetWindowPosition(window, x - w / 2 - 1, y);
+    }
 
     SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
     SDL(SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3));
@@ -39,7 +47,24 @@ int main(int, char *[])
     if (!glContext)
         Log::errAndQuit(SDL_GetError());
 
-    SDL(SDL_GL_SetSwapInterval(1));
+    SDL(SDL_GL_SetSwapInterval(0));
+
+    // Create window2
+    SDL_Window *window2 = SDL_CreateWindow("Current Show",
+                                           SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+                                           800, 600,
+                                           SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    if (!window2)
+        Log::errAndQuit(SDL_GetError());
+
+    {
+        int x, y, w, h;
+        SDL_GetWindowPosition(window2, &x, &y);
+        SDL_GetWindowSize(window2, &w, &h);
+        SDL_SetWindowPosition(window2, x + w / 2 + 1, y);
+    }
+
+    SDL(SDL_GL_MakeCurrent(window2, glContext));
 
     // Initialize GLEW
     {
@@ -49,8 +74,9 @@ int main(int, char *[])
             Log::errAndQuit((const char *)glewGetErrorString(err));
     }
 
+    SDL(SDL_GL_MakeCurrent(window, glContext));
     LaserShowRenderer laserShowRenderer;
-    laserShowRenderer.setShow("Test");
+    laserShowRenderer.setShow("Test2");
 
     // Run main loop
     auto t_previous = std::chrono::high_resolution_clock::now();
@@ -68,6 +94,8 @@ int main(int, char *[])
                 loop = false;
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
                 loop = false;
+            if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
+                loop = false;
         }
 
         // get delta time
@@ -78,13 +106,17 @@ int main(int, char *[])
 
         laserShowRenderer.update(dT);
 
+        SDL(SDL_GL_MakeCurrent(window, glContext));
         laserShowRenderer.render(w, h);
-
         SDL_GL_SwapWindow(window);
+
+        SDL(SDL_GL_MakeCurrent(window2, glContext));
+        laserShowRenderer.render2DVisualization(w, h);
+        SDL_GL_SwapWindow(window2);
     }
 
-
     SDL_GL_DeleteContext(glContext);
+    SDL_DestroyWindow(window2);
     SDL_DestroyWindow(window);
     SDL_Quit();
     exit(EXIT_SUCCESS);

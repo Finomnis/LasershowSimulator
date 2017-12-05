@@ -6,8 +6,8 @@
 
 static void generate(float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b)
 {
-    printf("%f\n", timePosition);
-    fflush(stdout);
+    //printf("%f\n", timePosition);
+    //fflush(stdout);
     float pct = timePosition/4;
 
     for(int i = 0; i < numPixels; i++){
@@ -19,20 +19,12 @@ static void generate(float timePosition, size_t numPixels, unsigned char *r, uns
 
 }
 
-static void reset()
-{
-
-}
-
-REGISTER_LASERSHOW(Test, 4, generate, reset)
-
-
-/*LASERSHOW(Test2, 4)
+static void generate2(float timePosition, size_t numPixels, unsigned char *r, unsigned char *g, unsigned char *b)
 {
     bool showEven = ((int)timePosition) & 0x1;
 
     for(int i = 0; i < numPixels; i++){
-        if ((i&0x1) == showEven){
+        if (((i/10)&0x1) == showEven){
             r[i] = 0;
             g[i] = 0;
             b[i] = 0;
@@ -42,5 +34,14 @@ REGISTER_LASERSHOW(Test, 4, generate, reset)
             b[i] = 255;
         }
     }
-}*/
+}
+
+static void reset()
+{
+
+}
+
+REGISTER_LASERSHOW(Test, 4, generate, reset)
+REGISTER_LASERSHOW(Test2, 4, generate2, reset)
+
 

@@ -13,6 +13,7 @@ class LaserShowRenderer
         LaserShowRenderer();
         ~LaserShowRenderer();
         void render(int w, int h);
+        void render2DVisualization(int w, int h);
         void update(float dt);
 
         void setShow(std::string name);

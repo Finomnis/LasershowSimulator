@@ -167,6 +167,54 @@ LaserShowRenderer::render(int w, int h)
 
 }
 
+void LaserShowRenderer::render2DVisualization(int w, int h)
+{
+    GL(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
+    unsigned char r[NUM_TRIANGLES];
+    unsigned char g[NUM_TRIANGLES];
+    unsigned char b[NUM_TRIANGLES];
+    generators[currentGenerator].generate(currentBeat, NUM_TRIANGLES, r, g, b);
+
+    GL(glUseProgram(program));
+
+    GLfloat colors[NUM_TRIANGLES * 9];
+    for (int i = 0; i < NUM_TRIANGLES; i++)
+    {
+        float cr = float(r[i]) / 255.0f;
+        float cg = float(g[i]) / 255.0f;
+        float cb = float(b[i]) / 255.0f;
+        float brightness = std::max(cr, std::max(cg, cb));
+
+
+        colors[9 * i + 0] = std::min(1.0f, 0.1f * brightness + 0.9f * cr);
+        colors[9 * i + 1] = std::min(1.0f, 0.1f * brightness + 0.9f * cg);
+        colors[9 * i + 2] = std::min(1.0f, 0.1f * brightness + 0.9f * cb);
+        colors[9 * i + 3] = cr * 0.2f;
+        colors[9 * i + 4] = cg * 0.2f;
+        colors[9 * i + 5] = cb * 0.2f;
+        colors[9 * i + 6] = cr * 0.2f;
+        colors[9 * i + 7] = cg * 0.2f;
+        colors[9 * i + 8] = cb * 0.2f;
+    }
+    glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 9 * NUM_TRIANGLES, colors, GL_STATIC_DRAW);
+
+    GL(glEnableVertexAttribArray(0));
+    GL(glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer));
+    GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+
+    GL(glEnableVertexAttribArray(1));
+    GL(glBindBuffer(GL_ARRAY_BUFFER, colorbuffer));
+    GL(glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr));
+
+    GL(glDrawArrays(GL_TRIANGLES, 0, 3 * NUM_TRIANGLES));
+
+    GL(glDisableVertexAttribArray(0));
+    GL(glDisableVertexAttribArray(1));
+}
+
 void LaserShowRenderer::update(float dT)
 {
     currentBeat += dT * bpm / 60.0f;
